@@ -11,18 +11,24 @@ async function genHashPassword(password) {
 }
 
 async function signup(request, response) {
-  console.log(request.body);
-  const { userName, password, roleId } = request.body;
+  try {
+    // console.log(request.body);
+    const { userName, password, roleId } = request.body;
 
-  if (password.length <= 8) {
-    response
-      .status(401)
-      .send({ msg: "password should be more than 8 charachers" });
-  } else {
-    const hashedPassword = await genHashPassword(password);
-    response.send(
-      await userService.insertUserService(userName, hashedPassword, roleId)
-    );
+    if (password.length <= 8) {
+      response
+        .status(401)
+        .send({ msg: "password should be more than 8 charachers" });
+    } else {
+      const hashedPassword = await genHashPassword(password);
+      response
+        .status(201)
+        .send(
+          await userService.insertUserService(userName, hashedPassword, roleId)
+        );
+    }
+  } catch (err) {
+    response.status(500).send(err.message);
   }
 }
 
@@ -55,15 +61,18 @@ async function logout(request, response) {
 }
 
 async function updateRole(request, response) {
-  // const userId = request.params;
-  const { userId, roleId } = request.body;
+  try {
+    const { userId, roleId } = request.body;
 
-  console.log(request.roleDetail.roleName);
-  if (request.roleDetail.roleName == "super user") {
-    userService.updateRoleService(userId, roleId);
-    response.send("updated succeessfully");
-  } else {
-    response.send("dont have access");
+    console.log(request.roleDetail.roleName);
+    if (request.roleDetail.roleName == "super user") {
+      userService.updateRoleService(userId, roleId);
+      response.status(200).send("updated succeessfully");
+    } else {
+      response.status(403).send("dont have access");
+    }
+  } catch (err) {
+    response.status(500).send(err.message);
   }
 }
 export default { signup, login, updateRole, logout };

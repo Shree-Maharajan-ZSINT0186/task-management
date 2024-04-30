@@ -34,7 +34,6 @@ async function expiryToken(token) {
 }
 async function updateRoleService(userId, roleId) {
   try {
-    console.log(roleId);
     const userUpdate = await user.updateOne({ _id: userId }, { roleId });
     return userUpdate ? userUpdate : null;
   } catch (error) {
