@@ -3,6 +3,8 @@ import connectDb from "./config.js";
 import userRouter from "./router/userRouter.js";
 import taskRouter from "./router/taskRouter.js";
 import { auth } from "express-openid-connect";
+import cron from "node-cron";
+import taskController from "./controller/taskController.js";
 
 // const config = {
 //   authRequired: false,
@@ -21,6 +23,13 @@ const PORT = 4000;
 // });
 
 // app.use(auth(config));
+
+const updateToBacklogTask = () => {
+  taskController.updateToBacklog(); // Call the controller function to update tasks to backlog
+  console.log("cron is running");
+};
+cron.schedule("* * * * *", updateToBacklogTask);
+
 app.use("/user", userRouter);
 app.use("/tasks", taskRouter);
 

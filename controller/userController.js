@@ -2,6 +2,7 @@ import userService from "../service/userService.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import "dotenv/config";
+import { expiredToken } from "../middleware/auth.js";
 
 async function genHashPassword(password) {
   const NO_OF_ROUND = 10;
@@ -43,7 +44,15 @@ async function login(request, response) {
     const storedDBPassword = userFromDB.password;
     const ispasswordcheck = await bcrypt.compare(password, storedDBPassword);
     if (ispasswordcheck) {
-      const token = jwt.sign({ id: userFromDB.id }, process.env.SECRET_KEY);
+      const currentTimestamp = Math.floor(Date.now() / 1000);
+      const token = jwt.sign(
+        {
+          id: userFromDB.id,
+          iat: currentTimestamp,
+          exp: currentTimestamp + 5 * 60,
+        },
+        process.env.SECRET_KEY
+      );
       userService.insertToken(userFromDB.id, token);
 
       response.send({ msg: "successful login", token });
@@ -54,9 +63,12 @@ async function login(request, response) {
 }
 
 async function logout(request, response) {
-  const token = request.header("x-auth-token");
-  if (userService.expiryToken(token)) {
-    response.send({ msg: "successful logout" });
+  try {
+    const token = request.header("x-auth-token");
+    expiredToken.push(token);
+    response.status(200).send({ msg: "logout successful" });
+  } catch {
+    response.status(501).send({ msg: "something went wrong" });
   }
 }
 
@@ -75,4 +87,17 @@ async function updateRole(request, response) {
     response.status(500).send(err.message);
   }
 }
-export default { signup, login, updateRole, logout };
+
+async function getUser(request, response) {
+  try {
+    if (request.roleDetail.roleName == "admin") {
+      response.send(await userService.getAllUserService());
+    } else {
+      response.status(401).send({ msg: "do not have access" });
+    }
+  } catch (err) {
+    response.status(500).send(err.message);
+  }
+}
+
+export default { signup, login, updateRole, logout, getUser };

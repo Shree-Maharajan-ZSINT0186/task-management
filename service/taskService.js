@@ -1,8 +1,8 @@
-import { acceptance } from "../model/acceptance.js";
 import { task } from "../model/tasks.js";
 
 async function inserttask(
   assignedBy,
+  assignedById,
   assignee,
   assigneeId,
   taskType,
@@ -13,6 +13,7 @@ async function inserttask(
   try {
     return await task.create({
       assignedBy,
+      assignedById,
       assignee,
       assigneeId,
       taskType,
@@ -26,8 +27,8 @@ async function inserttask(
   }
 }
 
-async function getAdminTask() {
-  return await task.find({ assignedBy });
+async function getAdminTask(assignedById) {
+  return await task.find({ assignedById });
 }
 async function getUserTask(assigneeId) {
   return await task.find({ assigneeId });
@@ -42,14 +43,13 @@ async function deleteTaskService(taskId) {
     throw error;
   }
 }
-async function updateTaskService(taskId, acceptanceStatus) {
+async function updateTaskService(taskId, taskStatus, assigneeId) {
   try {
-    // console.log(taskId, acceptanceStatus);
     const result = await task.findOneAndUpdate(
-      { _id: taskId },
-      { acceptanceStatus }
+      { _id: taskId, assigneeId: assigneeId },
+      { taskStatus: taskStatus },
+      { new: true }
     );
-    // console.log(result);
     return result;
   } catch (error) {
     console.error("Error updating :", error);
@@ -57,12 +57,40 @@ async function updateTaskService(taskId, acceptanceStatus) {
   }
 }
 
-async function createAcceptedTask(taskId) {
-  const { assigneeId, lastDate } = await task.findOne(
-    { _id: taskId },
-    { assigneeId: 1, lastDate: 1 }
+async function getTask(querys, assigneeId) {
+  const obj = { taskStatus: querys.taskStatus, assigneeId };
+  return await task.find(obj);
+}
+
+async function checkStatus() {
+  const tasks = await task.find({ taskStatus: { $ne: "closed" } });
+
+  // Get today's date
+  const today = new Date();
+  const todayDate = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate()
   );
-  return await acceptance.create({ taskId, assigneeId, lastDate });
+
+  const tasksWithSameLastDate = tasks.filter((task) => {
+    const taskLastDate = new Date(task.lastDate);
+    const taskLastDateWithoutTime = new Date(
+      taskLastDate.getFullYear(),
+      taskLastDate.getMonth(),
+      taskLastDate.getDate()
+    );
+    return taskLastDateWithoutTime.getTime() === todayDate.getTime();
+  });
+  return tasksWithSameLastDate;
+}
+
+async function updateToBacklogService(tasks) {
+  return await task.findOneAndUpdate(
+    { _id: tasks.id },
+    { taskStatus: "backlog" },
+    { new: true }
+  );
 }
 
 export default {
@@ -71,5 +99,7 @@ export default {
   getUserTask,
   deleteTaskService,
   updateTaskService,
-  createAcceptedTask,
+  getTask,
+  checkStatus,
+  updateToBacklogService,
 };

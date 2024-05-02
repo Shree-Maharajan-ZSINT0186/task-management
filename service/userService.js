@@ -47,6 +47,15 @@ async function getNameById(userId) {
 async function getIdByName(userName) {
   return await user.findOne({ userName }, { _id: 1 });
 }
+
+async function getAllUserService() {
+  return await user.find({});
+}
+
+async function findUser(assignee) {
+  return await user.findOne({ userName: assignee }, { _id: 0, userName: 1 });
+}
+
 export default {
   insertUserService,
   getUserByName,
@@ -58,4 +67,6 @@ export default {
   updateRoleService,
   getNameById,
   getIdByName,
+  getAllUserService,
+  findUser,
 };
