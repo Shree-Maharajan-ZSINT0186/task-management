@@ -46,5 +46,5 @@ app.use("/tasks", taskRouter);
 app.listen(PORT, () => {
   console.log(`The server started in: ${PORT} ✨✨`);
   connectDb();
-  console.log("database connected");
+  console.log("database mongo connected ");
 });
