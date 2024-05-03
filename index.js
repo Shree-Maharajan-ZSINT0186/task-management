@@ -25,8 +25,7 @@ const PORT = 4000;
 // app.use(auth(config));
 
 const updateToBacklogTask = () => {
-  taskController.updateToBacklog(); // Call the controller function to update tasks to backlog
-  console.log("cron is running");
+  taskController.updateToBacklog();
 };
 cron.schedule("* * * * *", updateToBacklogTask);
 

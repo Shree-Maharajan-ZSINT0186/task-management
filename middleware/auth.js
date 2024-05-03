@@ -24,6 +24,7 @@ const auth = async (request, response, next) => {
     request.name = name;
     request.roleid = roleid;
     request.roleDetail = roleDetail;
+
     isTokenBlacklisted(token)
       ? response.status(401).send({ msg: "tokenis expired please login again" })
       : next();

@@ -89,10 +89,11 @@ async function updateToBacklog(request, response) {
         await taskService.updateToBacklogService(task);
       }
     }
-    response.send({ msg: "Tasks updated to backlog" });
+    return;
+    // response.send({ msg: "Tasks updated to backlog" });
   } catch (error) {
     console.log(error.message);
-    // response.status(500).send({ error: "Internal server error" });
+    // response.status(500).send({ msg: error });
   }
 }
 

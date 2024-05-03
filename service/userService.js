@@ -55,7 +55,6 @@ async function getAllUserService() {
 async function findUser(assignee) {
   return await user.findOne({ userName: assignee }, { _id: 0, userName: 1 });
 }
-
 export default {
   insertUserService,
   getUserByName,

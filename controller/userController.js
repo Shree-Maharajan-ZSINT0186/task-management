@@ -2,6 +2,7 @@ import userService from "../service/userService.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import "dotenv/config";
+
 import { expiredToken } from "../middleware/auth.js";
 
 async function genHashPassword(password) {

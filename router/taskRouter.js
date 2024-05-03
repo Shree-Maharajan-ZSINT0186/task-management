@@ -10,6 +10,5 @@ router
   .get(auth, taskController.getTask)
   .delete(auth, taskController.deleteTask)
   .put(auth, taskController.updateTask);
-// router.route("/backlog").put(taskController.updateToBacklog);
 
 export default router;

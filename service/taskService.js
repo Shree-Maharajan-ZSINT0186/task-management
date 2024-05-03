@@ -92,7 +92,6 @@ async function updateToBacklogService(tasks) {
     { new: true }
   );
 }
-
 export default {
   inserttask,
   getAdminTask,
