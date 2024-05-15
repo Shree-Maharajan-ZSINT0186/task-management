@@ -5,7 +5,7 @@ import taskRouter from "./router/taskRouter.js";
 import { auth } from "express-openid-connect";
 import cron from "node-cron";
 import taskController from "./controller/taskController.js";
-
+import morgan from "morgan";
 // const config = {
 //   authRequired: false,
 //   auth0Logout: true,
@@ -17,6 +17,7 @@ import taskController from "./controller/taskController.js";
 
 const app = express();
 app.use(express.json());
+app.use(morgan("tiny"));
 const PORT = 4000;
 // app.get("/", function (request, response) {
 //   response.send("🙋‍♂️, 🌏 🎊✨🤩");
@@ -27,7 +28,8 @@ const PORT = 4000;
 const updateToBacklogTask = () => {
   taskController.updateToBacklog();
 };
-cron.schedule("* * * * *", updateToBacklogTask);
+cron.schedule("59 23 * * *", updateToBacklogTask);
+// cron.schedule("* * * * *", updateToBacklogTask);
 
 app.use("/user", userRouter);
 app.use("/tasks", taskRouter);
