@@ -1,28 +1,28 @@
+import { task } from "../model/tasks.js";
 import taskService from "../service/taskService.js";
 import userService from "../service/userService.js";
 import nodemailer from "nodemailer";
 async function postTask(request, response) {
   try {
-    if (request.userDetails?.roleName == "admin") {
-      console.log(request.userDetails);
+    if (request.userDetails?.roleName === "admin") {
       const assignedBy = request.userDetails.userName;
       const assignedById = request.id;
       const { assignee, taskType, description, lastDate, priority } =
         request.body;
 
-      const assigneeId = await userService.getIdByName(assignee);
-      const tasks = await taskService.insertTask(
+      const idValue = await userService.getIdByName(assignee);
+      const assigneeId = idValue.id;
+      const tasks = await task.create({
         assignedBy,
         assignedById,
         assignee,
-        assigneeId.id,
+        assigneeId,
         taskType,
         description,
         lastDate,
-        priority
-      );
-      const id = await userService.findEmail(assigneeId.id);
-      // console.log(id);
+        priority,
+      });
+      const id = await userService.findEmail(assigneeId);
       const taskDetails = { ...tasks._doc };
       let config = {
         service: "gmail",
@@ -32,11 +32,6 @@ async function postTask(request, response) {
         },
       };
       const transporter = nodemailer.createTransport(config);
-      // const htmlContent = fs.readFileSync("html-files/emailTemplate.html", "utf8");
-      // const modifiedHtmlContent = htmlContent
-      //   .replaceAll("${name}", name)
-      //   .replace("${email}", email);
-      console.log(taskDetails.lastDate);
       let message = {
         from: process.env.EMAIL,
         to: id.email,
@@ -56,12 +51,12 @@ async function postTask(request, response) {
         .catch((error) => {
           console.log(error);
         });
-      response.status(201).send(taskDetails);
+      response.status(201).send({ tasks: taskDetails });
     } else {
       response.status(403).send({ msg: " cannot access " });
     }
   } catch (err) {
-    response.status(500).send(err.message);
+    response.status(500).send({ msg: err.message });
   }
 }
 
@@ -116,6 +111,7 @@ async function updateTask(request, response) {
     };
 
     const currentUserRole = request.userDetails.roleName;
+
     if (!rolePermissions[currentUserRole][taskStatus]) {
       return response.send({
         msg:
@@ -134,7 +130,7 @@ async function updateTask(request, response) {
   }
 }
 
-async function updateToBacklog(request, response) {
+async function updateToBacklog() {
   try {
     console.log("cron is running in update to backlog ");
     const tasks = await taskService.checkStatus();
@@ -153,18 +149,44 @@ async function updateToBacklog(request, response) {
 
 async function getTask(request, response) {
   try {
-    const searchQuery = request.query;
-    var id = request.id;
-    const page = request.body.page || 1;
-    const limit = request.body.limit || 5;
-    const skip = (page - 1) * limit;
+    // const searchQuery = request.query;
+    // var id = request.id;
+    // const page = request.body.page || 1;
+    // const limit = request.body.limit || 5;
+    // const skip = (page - 1) * limit;
+    // if (request.userDetails?.roleName == "admin") {
+    //   const { count, data } = await taskService.getAdminTask(
+    //     searchQuery,
+    //     id,
+    //     skip,
+    //     limit
+    //   );
+    //   response.send({ count, data });
+    // } else if (request.userDetails?.roleName == "normal") {
+    //   const { count, data } = await taskService.getUserTask(
+    //     searchQuery,
+    //     id,
+    //     skip,
+    //     limit
+    //   );
+    //   response.send({ count, data });
+    // }
 
+    const { page, limit, order, orderBy, ...searchQuery } = request.query;
+    var id = request.id;
+    const bodyPage = page || 1;
+    const bodyLimit = limit || 5;
+    const skip = (bodyPage - 1) * limit;
+    const bodyOrder = order || "createdAt";
+    const bodyOrderBy = orderBy || 1;
     if (request.userDetails?.roleName == "admin") {
       const { count, data } = await taskService.getAdminTask(
         searchQuery,
         id,
         skip,
-        limit
+        bodyLimit,
+        bodyOrder,
+        bodyOrderBy
       );
       response.send({ count, data });
     } else if (request.userDetails?.roleName == "normal") {
@@ -172,7 +194,9 @@ async function getTask(request, response) {
         searchQuery,
         id,
         skip,
-        limit
+        bodyLimit,
+        bodyOrder,
+        bodyOrderBy
       );
       response.send({ count, data });
     }

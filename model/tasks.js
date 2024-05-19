@@ -6,11 +6,18 @@ const taskSchema = new mongoose.Schema(
     assignedById: String,
     assignee: String,
     assigneeId: String,
-    taskType: String,
+    taskType: {
+      type: String,
+      enum: ["bug", "enhance"],
+    },
     description: String,
     lastDate: Date,
-    priority: String,
-    taskStatus: { type: String, default: "open" },
+    priority: { type: Number, enum: [1, 2, 3] },
+    taskStatus: {
+      type: String,
+      default: "open",
+      enum: ["open", "in progress", "request", "completed", "backlog"],
+    },
     startingDate: Date,
   },
   { timestamps: true }

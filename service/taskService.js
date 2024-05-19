@@ -1,39 +1,5 @@
 import { task } from "../model/tasks.js";
 
-async function insertTask(
-  assignedBy,
-  assignedById,
-  assignee,
-  assigneeId,
-  taskType,
-  description,
-  lastDate,
-  priority
-) {
-  try {
-    return await task.create({
-      assignedBy,
-      assignedById,
-      assignee,
-      assigneeId,
-      taskType,
-      description,
-      lastDate,
-      priority,
-    });
-  } catch (error) {
-    console.error("Error inserting tasks:", error);
-    return null;
-  }
-}
-
-// async function getAdminTask(assignedById) {
-//   return await task.find({ assignedById });
-// }
-// async function getUserTask(assigneeId) {
-//   return await task.find({ assigneeId });
-// }
-
 async function deleteTaskService(taskId) {
   try {
     const result = await task.deleteOne({ _id: taskId });
@@ -84,17 +50,35 @@ async function updateToBacklogService(tasks) {
 //   }
 // }
 
-async function getUserTask(searchQuery, assigneeId, skip, limit) {
+async function getUserTask(
+  searchQuery,
+  assigneeId,
+  skip,
+  limit,
+  order,
+  orderBy
+) {
+  const sortCriteria = {};
+  sortCriteria[order] = orderBy;
   const obj = searchQuery ? { ...searchQuery, assigneeId } : { assigneeId };
-  const tasks = await task.find(obj).skip(skip).limit(limit);
+  const tasks = await task.find(obj).sort(sortCriteria).skip(skip).limit(limit);
   const count = await task.countDocuments(obj);
 
   return { count, data: tasks };
 }
 
-async function getAdminTask(searchQuery, assignedById, skip, limit) {
+async function getAdminTask(
+  searchQuery,
+  assignedById,
+  skip,
+  limit,
+  order,
+  orderBy
+) {
+  const sortCriteria = {};
+  sortCriteria[order] = orderBy;
   const obj = searchQuery ? { ...searchQuery, assignedById } : { assignedById };
-  const tasks = await task.find(obj).skip(skip).limit(limit);
+  const tasks = await task.find(obj).sort(sortCriteria).skip(skip).limit(limit);
   const count = await task.countDocuments(obj);
 
   return { count, data: tasks };
@@ -127,12 +111,10 @@ async function checkStatus() {
 }
 
 export default {
-  insertTask,
   getAdminTask,
   getUserTask,
   deleteTaskService,
   updateTaskService,
-
   checkStatus,
   updateToBacklogService,
 };

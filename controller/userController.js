@@ -50,7 +50,7 @@ async function login(request, response) {
         {
           id: userFromDB.id,
           iat: currentTimestamp,
-          exp: currentTimestamp + 1 * 60,
+          exp: currentTimestamp + 60 * 60,
         },
         process.env.SECRET_KEY
       );
