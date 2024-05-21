@@ -1,10 +1,6 @@
 import jwt from "jsonwebtoken";
 import { session } from "../model/session.js";
 import userService from "../service/userService.js";
-// const expiredToken = [];
-// const isTokenBlacklisted = (token) => {
-//   return expiredToken.includes(token);
-// };
 const auth = async (request, response, next) => {
   const token = request.header("x-auth-token");
   try {
@@ -19,6 +15,8 @@ const auth = async (request, response, next) => {
       request.id = id;
       request.userDetails = userDetails;
       next();
+    } else {
+      console.log("in else");
     }
   } catch {
     await userService.expiryToken(token);

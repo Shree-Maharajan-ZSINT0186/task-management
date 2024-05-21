@@ -7,7 +7,12 @@ async function insertUserService(userName, email, password, roleId) {
   return await user.create({ userName, email, password, roleId });
 }
 async function getUserByName(userName) {
-  return await user.findOne({ userName });
+  try {
+    const obje = await user.findOne({ userName });
+    return obje;
+  } catch (error) {
+    return error.msg;
+  }
 }
 async function insertToken(userId, token) {
   return await session.create({ userId, token });
@@ -37,13 +42,7 @@ async function findUser(assignee) {
 }
 
 async function updateRoleService(userId, roleId) {
-  try {
-    const userUpdate = await user.updateOne({ _id: userId }, { roleId });
-    return userUpdate ? userUpdate : null;
-  } catch (error) {
-    console.error("Error fetching role ID:", error);
-    return null;
-  }
+  return await user.updateOne({ _id: userId }, { roleId });
 }
 async function findEmail(id) {
   return await user.findOne({ _id: id }, { _id: 0, email: 1 });

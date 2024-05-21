@@ -149,29 +149,6 @@ async function updateToBacklog() {
 
 async function getTask(request, response) {
   try {
-    // const searchQuery = request.query;
-    // var id = request.id;
-    // const page = request.body.page || 1;
-    // const limit = request.body.limit || 5;
-    // const skip = (page - 1) * limit;
-    // if (request.userDetails?.roleName == "admin") {
-    //   const { count, data } = await taskService.getAdminTask(
-    //     searchQuery,
-    //     id,
-    //     skip,
-    //     limit
-    //   );
-    //   response.send({ count, data });
-    // } else if (request.userDetails?.roleName == "normal") {
-    //   const { count, data } = await taskService.getUserTask(
-    //     searchQuery,
-    //     id,
-    //     skip,
-    //     limit
-    //   );
-    //   response.send({ count, data });
-    // }
-
     const { page, limit, order, orderBy, ...searchQuery } = request.query;
     var id = request.id;
     const bodyPage = page || 1;

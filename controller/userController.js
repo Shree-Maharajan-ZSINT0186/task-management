@@ -11,13 +11,14 @@ async function genHashPassword(password) {
 }
 
 async function signup(request, response) {
+  const { userName, email, password, roleId } = request.body;
   try {
-    const { userName, email, password, roleId } = request.body;
-
     if (password.length <= 8) {
-      response
-        .status(401)
-        .send({ msg: "password should be more than 8 characters" });
+      response.status(400).send({
+        error: "Bad Request",
+        msg: "Password should be more than 8 characters",
+      });
+      // return;
     } else {
       const hashedPassword = await genHashPassword(password);
       const user = await userService.insertUserService(
@@ -26,41 +27,58 @@ async function signup(request, response) {
         hashedPassword,
         roleId
       );
-      const userDetail = { ...user._doc, password: undefined, _id: undefined };
-      response.status(201).send(userDetail);
+      if (user?.username && user?.password) {
+        const userDetail = {
+          ...user._doc,
+          password: undefined,
+          _id: undefined,
+        };
+        response.status(200).send({ msg: "signedup succesfully" });
+      } else {
+        response.status(401).send({ msg: "Can't sign up" });
+      }
     }
   } catch (err) {
-    response.status(500).send({ msg: err.message });
+    response
+      .status(500)
+      .send({ error: "Internal Server Error", msg: err.message });
   }
 }
 
-async function login(request, response) {
-  const { userName, password } = request.body;
-  const userFromDB = await userService.getUserByName(userName);
-  const ERROR_MESSAGE = { msg: "invalid credentials" };
-  // console.log(userFromDB);
-  if (!userFromDB) {
-    response.status(401).send(ERROR_MESSAGE);
-  } else {
-    const storedDBPassword = userFromDB.password;
-    const isPasswordCheck = await bcrypt.compare(password, storedDBPassword);
-    if (isPasswordCheck) {
-      const currentTimestamp = Math.floor(Date.now() / 1000);
-      const token = jwt.sign(
-        {
-          id: userFromDB.id,
-          iat: currentTimestamp,
-          exp: currentTimestamp + 60 * 60,
-        },
-        process.env.SECRET_KEY
-      );
-      userService.insertToken(userFromDB.id, token);
-
-      response.send({ msg: "successful login", token });
+export async function login(request, response) {
+  try {
+    const { userName, password } = request.body;
+    const userFromDB = await userService.getUserByName(userName);
+    const ERROR_MESSAGE = { msg: "invalid credentials" };
+    // console.log(userFromDB);
+    if (!userFromDB) {
+      response.status(401).send({ msg: "invalid credential" });
     } else {
-      response.status(401).send(ERROR_MESSAGE);
+      const storedDBPassword = userFromDB.password;
+      const isPasswordCheck = await bcrypt.compare(password, storedDBPassword);
+      if (isPasswordCheck) {
+        const token = generateToken(userFromDB);
+        await userService.insertToken(userFromDB.id, token);
+        response.status(200).send({ msg: "successful login", token });
+      } else {
+        response.status(401).send({ msg: "invalid credentials" });
+      }
     }
+  } catch (error) {
+    response.status(500).send({ msg: error.message });
   }
+}
+
+function generateToken(userFromDB) {
+  const currentTimestamp = Math.floor(Date.now() / 1000);
+  return jwt.sign(
+    {
+      id: userFromDB.id,
+      iat: currentTimestamp,
+      exp: currentTimestamp + 60 * 60,
+    },
+    process.env.SECRET_KEY
+  );
 }
 
 async function logout(request, response) {
@@ -69,34 +87,42 @@ async function logout(request, response) {
     await userService.expiryToken(token);
     response.status(200).send({ msg: "logout successful" });
   } catch {
-    response.status(501).send({ msg: "something went wrong" });
+    response.status(500).send({ msg: "something went wrong" });
   }
 }
 
 async function updateRole(request, response) {
   try {
     const { userId, roleId } = request.body;
-    if (request.userDetails.roleName == "super user") {
-      userService.updateRoleService(userId, roleId);
+    if (request.userDetails.roleName === "super user") {
+      await userService.updateRoleService(userId, roleId);
       response.status(200).send({ msg: "updated successfully" });
     } else {
       response.status(403).send({ msg: "don't have access" });
     }
   } catch (err) {
-    response.status(500).send(err.message);
+    response.status(500).send({ msg: err.message });
   }
 }
 
 async function getUser(request, response) {
   try {
     if (request.userDetails?.roleName == "admin") {
-      response.send(await userService.getAllUserService());
+      response.status(200).send(await userService.getAllUserService());
     } else {
-      response.status(401).send({ msg: "do not have access" });
+      response.status(403).send({ msg: "do not have access" });
     }
   } catch (err) {
     response.status(500).send(err.message);
   }
 }
 
-export default { signup, login, updateRole, logout, getUser };
+export default {
+  signup,
+  login,
+  updateRole,
+  logout,
+  getUser,
+  generateToken,
+  genHashPassword,
+};
