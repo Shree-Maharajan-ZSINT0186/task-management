@@ -18,16 +18,8 @@ async function insertToken(userId, token) {
   return await session.create({ userId, token });
 }
 
-async function deleteToken(token) {
-  return await session.deleteOne({ token });
-}
-
 async function expiryToken(token) {
   return await session.updateOne({ token }, { expiry: "yes" });
-}
-
-async function getNameById(userId) {
-  return await user.findOne({ _id: userId }, { _id: 0, userName: 1 });
 }
 async function getIdByName(userName) {
   return await user.findOne({ userName }, { _id: 1 });
@@ -35,10 +27,6 @@ async function getIdByName(userName) {
 
 async function getAllUserService() {
   return await user.find({});
-}
-
-async function findUser(assignee) {
-  return await user.findOne({ userName: assignee }, { _id: 0, userName: 1 });
 }
 
 async function updateRoleService(userId, roleId) {
@@ -74,15 +62,11 @@ export default {
   insertUserService,
   getUserByName,
   insertToken,
-
   expiryToken,
   updateRoleService,
-  getNameById,
   getIdByName,
   getAllUserService,
-  findUser,
   userDetail,
   findEmail,
-  deleteToken,
   findToken,
 };

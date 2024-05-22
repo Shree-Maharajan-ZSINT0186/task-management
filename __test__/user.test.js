@@ -195,9 +195,7 @@ describe("userControll/updateRole", () => {
     id: 1,
     exp: Math.floor(Date.now() / 1000) + 60 * 60,
   }));
-  jest.spyOn(session, "findOne").mockImplementation(() => ({
-    expiry: "no",
-  }));
+
   jest.spyOn(user, "findOne").mockImplementation(() => ({
     userName: "esa",
     roleId: 1,
@@ -205,6 +203,9 @@ describe("userControll/updateRole", () => {
   }));
 
   test("POST/User should return status code 200", async () => {
+    jest.spyOn(session, "findOne").mockImplementation(() => ({
+      expiry: "no",
+    }));
     jest
       .spyOn(role, "findOne")
       .mockImplementation(() => ({ roleName: "super user" }));
@@ -217,7 +218,26 @@ describe("userControll/updateRole", () => {
     expect(response.status).toEqual(200);
   });
 
+  test("POST/User should return status code 401", async () => {
+    jest.spyOn(session, "findOne").mockImplementation(() => ({
+      expiry: "yes",
+    }));
+    jest
+      .spyOn(role, "findOne")
+      .mockImplementation(() => ({ roleName: "super user" }));
+    jest.spyOn(user, "updateOne").mockImplementation();
+    const response = await request(app)
+      .put("/user/updateRole")
+      .set("x-auth-token", authToken)
+      .send({ userId: 1, roleId: 2 });
+
+    expect(response.status).toEqual(401);
+  });
+
   test("POST/User should return status code 403", async () => {
+    jest.spyOn(session, "findOne").mockImplementation(() => ({
+      expiry: "no",
+    }));
     jest
       .spyOn(role, "findOne")
       .mockImplementation(() => ({ roleName: "normal" }));
@@ -231,6 +251,9 @@ describe("userControll/updateRole", () => {
   });
 
   test("POST/User should return status code 500", async () => {
+    jest.spyOn(session, "findOne").mockImplementation(() => ({
+      expiry: "no",
+    }));
     jest
       .spyOn(role, "findOne")
       .mockImplementation(() => ({ roleName: "super user" }));
@@ -246,7 +269,7 @@ describe("userControll/updateRole", () => {
   });
 });
 
-describe("userControll/getUser", () => {
+describe("userController/getUser", () => {
   jwt.verify = jest.fn(() => ({
     id: 1,
     exp: Math.floor(Date.now() / 1000) + 60 * 60,

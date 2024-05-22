@@ -16,11 +16,11 @@ const auth = async (request, response, next) => {
       request.userDetails = userDetails;
       next();
     } else {
-      console.log("in else");
+      response.status(401).send({ msg: "Login expired" });
     }
   } catch {
     await userService.expiryToken(token);
-    response.status(401).send({ msg: "Login expired" });
+    response.status(500).send({ msg: "Login expired" });
   }
 };
 export { auth };

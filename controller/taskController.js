@@ -43,7 +43,8 @@ async function postTask(request, response) {
         Last Date: ${taskDetails.lastDate}
         taskStatus: ${taskDetails.taskStatus}`,
       };
-      transporter
+
+      await transporter
         .sendMail(message)
         .then(() => {
           console.log("successfully email sent");
@@ -51,7 +52,7 @@ async function postTask(request, response) {
         .catch((error) => {
           console.log(error);
         });
-      response.status(201).send({ tasks: taskDetails });
+      response.status(200).send({ tasks: taskDetails });
     } else {
       response.status(403).send({ msg: " cannot access " });
     }
@@ -113,7 +114,7 @@ async function updateTask(request, response) {
     const currentUserRole = request.userDetails.roleName;
 
     if (!rolePermissions[currentUserRole][taskStatus]) {
-      return response.send({
+      return response.status(403).send({
         msg:
           "You do not have the access to change the task status to " +
           taskStatus,
@@ -124,26 +125,29 @@ async function updateTask(request, response) {
       taskStatus,
       request.id
     );
-    response.send(TaskExist ? TaskExist : { msg: "cannot update" });
+    response.status(200).send(TaskExist ? TaskExist : { msg: "cannot update" });
   } catch (err) {
     response.status(500).send(err.message);
   }
 }
 
-async function updateToBacklog() {
+async function updateToBacklog(request, response) {
   try {
-    console.log("cron is running in update to backlog ");
     const tasks = await taskService.checkStatus();
-    if (tasks) {
+    console.log(tasks && tasks.length > 0);
+    if (tasks.length > 0) {
       for (const task of tasks) {
         await taskService.updateToBacklogService(task);
       }
+      response.status(200).send({ msg: "Tasks updated to backlog" });
+    } else {
+      response.status(204).send({ msg: "no task to update" });
     }
+
     return;
-    // response.send({ msg: "Tasks updated to backlog" });
   } catch (error) {
     console.log(error.message);
-    // response.status(500).send({ msg: error });
+    response.status(500).send({ msg: error });
   }
 }
 
@@ -165,7 +169,7 @@ async function getTask(request, response) {
         bodyOrder,
         bodyOrderBy
       );
-      response.send({ count, data });
+      response.status(200).send({ msg: "admin tasks", count, data });
     } else if (request.userDetails?.roleName == "normal") {
       const { count, data } = await taskService.getUserTask(
         searchQuery,
@@ -175,11 +179,11 @@ async function getTask(request, response) {
         bodyOrder,
         bodyOrderBy
       );
-      response.send({ count, data });
+      response.status(200).send({ msg: "normal user tasks", count, data });
     }
   } catch (err) {
     // console.log("..............//////////////");
-    response.status(500).send(err.message);
+    response.status(500).send({ msg: err.message });
   }
 }
 
